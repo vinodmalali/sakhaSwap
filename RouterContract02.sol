@@ -18,7 +18,7 @@ interface IUniswapV2Factory {
 
 interface ISakha {
 
-    function reward(address to,uint amountADesired, uint amountBDesired) external ;  
+    function reward(address to,address tokenA,  address tokenB, uint amountADesired, uint amountBDesired) external ;  
 }
 
 interface IUniswapV2Pair {
@@ -236,17 +236,27 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
     address public immutable override factory;
     address public immutable override WETH;
     address public Sakha;
+    address public owner;
 
     modifier ensure(uint deadline) {
         require(deadline >= block.timestamp, 'UniswapV2Router: EXPIRED');
         _;
     }
 
-    constructor(address _factory, address _WETH, address _sakha) public {
+    constructor(address _factory, address _WETH) public {
+        owner = msg.sender;
         factory = _factory;
-        WETH = _WETH;
-        Sakha = _sakha;
+        WETH = _WETH; 
     }
+
+    modifier onlyOwner() {
+        owner = msg.sender;
+        _;
+    }
+
+   function setSakha(address _sakha) public {
+        Sakha = _sakha;
+   }
 
     receive() external payable {
         assert(msg.sender == WETH); // only accept ETH via fallback from the WETH contract
@@ -299,7 +309,8 @@ contract UniswapV2Router02 is IUniswapV2Router02 {
 
         // uint totalUSD = (amountADesired * 10) + (amountBDesired * 20);
         // uint amtSG = totalUSD / 100;
-        ISakha(Sakha).reward(msg.sender, amountADesired, amountBDesired);
+
+        ISakha(Sakha).reward(msg.sender, tokenA, tokenB, amountADesired, amountBDesired);
     }
 
 
@@ -707,7 +718,7 @@ library UniswapV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'be8f3e400b8f9d8dbd41f8702a93c76ae86a3ca0d090baf39aa642351bd68500' // init code hash
+                hex'f9b603f4ffc5b9346ebb79d5048b2b1293a4fd8e3555d934640877d949c96743' // init code hash
             ))));
     }
 
